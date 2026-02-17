@@ -5,6 +5,6 @@ type Property struct {
 	Description string  `json:"description"`
 	Location    string  `json:"location"`
 	URL         string  `json:"url"`
-	Price       int64   `json:"price"`
+	Price       float64 `json:"price"`
 	Rating      float64 `json:"rating"`
 }
