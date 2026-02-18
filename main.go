@@ -2,6 +2,7 @@ package main
 
 import (
 	"airbnb-scraper/services"
+	"airbnb-scraper/storage"
 
 	"fmt"
 )
@@ -9,12 +10,25 @@ import (
 func main() {
 	fmt.Println("Starting Airbnb Scraper...")
 
+	// Call base scraper
 	properties, err := services.ScrapeAirbnb()
-
 	if err != nil {
-		fmt.Println("Error:", err)
+		fmt.Println("Error To Srape:", err)
 		return
 	}
+
+	fmt.Println("Airbnb data fetch successfully.")
+
+	// Save into csv file
+	err = storage.SavePropertiesToCSV(properties, "data/properties.csv")
+	if err != nil {
+		fmt.Println("Error To Save:", err)
+		return
+	}
+
+	fmt.Println("Airbnb data saved into csv file successfully.")
+
+
 
 	for i, p := range properties {
 		fmt.Println("-----------", i, "---------------")
