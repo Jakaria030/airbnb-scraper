@@ -1,6 +1,7 @@
 package main
 
 import (
+	"airbnb-scraper/config"
 	"airbnb-scraper/models"
 
 	"context"
@@ -16,21 +17,18 @@ func main() {
 	ctx, cancel := chromedp.NewContext(context.Background())
 	defer cancel()
 
-	ctx, cancel = context.WithTimeout(ctx, 60*time.Second)
+	ctx, cancel = context.WithTimeout(ctx, config.TIMEOUT*time.Second)
 	defer cancel()
-
-	url := "https://www.airbnb.com/s/Kuala-Lumpur/homes?place_id=ChIJ5-rvAcdJzDERfSgcL1uO2fQ&refinement_paths%5B%5D=%2Fhomes&flexible_trip_lengths%5B%5D=weekend_trip&date_picker_type=FLEXIBLE_DATES&search_type=HOMEPAGE_CAROUSEL_CLICK"
 
 	var Properties []models.Property
 
 	err := chromedp.Run(ctx,
-		chromedp.Navigate(url),
+		chromedp.Navigate(config.SEARCH_URL),
 		chromedp.WaitVisible("div.c965t3n", chromedp.ByQuery),
 
-		chromedp.Evaluate(`
+		chromedp.Evaluate(fmt.Sprintf(`
 			Array.from(document.querySelectorAll("div.c965t3n"))
 				.map(card => {
-					const baseUrl = "https://www.airbnb.com";
 
 					// ----- Title -----
 					const titleElement = card.querySelector("[data-testid='listing-card-title']");
@@ -54,7 +52,7 @@ func main() {
 					let listingUrl = "";
 					if (urlElement) {
 						const href = urlElement.getAttribute("href").split("?")[0];
-						listingUrl = baseUrl + href;
+						listingUrl = "%s" + href;
 					}
 
 					// ----- Price Per Night -----
@@ -103,7 +101,7 @@ func main() {
 						Rating: rating
 					};
 				});
-		`, &Properties),
+		`, config.BASE_URL), &Properties),
 	)
 
 	if err != nil {
