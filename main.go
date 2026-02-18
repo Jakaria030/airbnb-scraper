@@ -13,9 +13,9 @@ func main() {
 	fmt.Println("Starting Airbnb Scraper...")
 
 	// Call base scraper
-	properties, err := services.ScrapeAirbnb()
+	properties, err := services.ScrapeAirbnb(config.SEARCH_URLS[:])
 	if err != nil {
-		fmt.Println("Error To Srape:", err)
+		fmt.Println("Error to Scrape:", err)
 		return
 	}
 	fmt.Println("Airbnb data fetch successfully.")
