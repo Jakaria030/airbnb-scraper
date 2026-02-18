@@ -1,26 +1,15 @@
 package main
 
 import (
-	"airbnb-scraper/config"
-	"airbnb-scraper/scraper"
+	"airbnb-scraper/services"
 
-	"context"
 	"fmt"
-	"time"
-
-	"github.com/chromedp/chromedp"
 )
 
 func main() {
-	fmt.Println("Hello Airbnb")
+	fmt.Println("Starting Airbnb Scraper...")
 
-	ctx, cancel := chromedp.NewContext(context.Background())
-	defer cancel()
-
-	ctx, cancel = context.WithTimeout(ctx, config.TIMEOUT*time.Second)
-	defer cancel()
-
-	properties, err := scraper.ScrapePage(ctx, config.SEARCH_URL)
+	properties, err := services.ScrapeAirbnb()
 
 	if err != nil {
 		fmt.Println("Error:", err)
