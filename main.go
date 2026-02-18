@@ -1,6 +1,7 @@
 package main
 
 import (
+	"airbnb-scraper/config"
 	"airbnb-scraper/services"
 	"airbnb-scraper/storage"
 
@@ -20,7 +21,7 @@ func main() {
 	fmt.Println("Airbnb data fetch successfully.")
 
 	// Save into csv file
-	err = storage.SavePropertiesToCSV(properties, "data/properties.csv")
+	err = storage.SavePropertiesToCSV(properties, config.FILE_PATH)
 	if err != nil {
 		fmt.Println("Error To Save:", err)
 		return
