@@ -3,6 +3,7 @@ package scraper
 import (
 	"airbnb-scraper/config"
 	"airbnb-scraper/models"
+	"airbnb-scraper/utils"
 
 	"context"
 	"fmt"
@@ -16,10 +17,12 @@ func ScrapePage(ctx context.Context, url string) ([]models.Property, error) {
 
 	err := chromedp.Run(ctx,
 		chromedp.Navigate(url),
+		chromedp.Sleep(utils.RandomDelay()),
 		chromedp.WaitVisible("div.c965t3n", chromedp.ByQuery),
 
 		chromedp.Evaluate(fmt.Sprintf(`
 		Array.from(document.querySelectorAll("div.c965t3n"))
+			.slice(0,5)
 			.map(card => {
 
 				// ----- Title -----

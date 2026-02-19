@@ -16,12 +16,12 @@ func main() {
 	fmt.Println("Starting Airbnb Scraper...")
 
 	// Call base scraper
-	properties, err := services.ScrapeAirbnb(config.SEARCH_URLS[:])
+	properties, err := services.ScrapeAirbnb()
 	if err != nil {
 		fmt.Println("Error to Scrape:", err)
 		return
 	}
-	fmt.Println("Airbnb data fetch successfully.")
+	fmt.Println("\nAirbnb data fetch successfully.")
 
 	// Save into csv file
 	err = storage.SavePropertiesToCSV(properties, config.FILE_PATH)
