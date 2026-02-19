@@ -3,6 +3,7 @@ package storage
 import (
 	"airbnb-scraper/config"
 	"airbnb-scraper/models"
+	"fmt"
 
 	"context"
 	"log"
@@ -30,11 +31,25 @@ func InitDB(connString string) {
 	Pool = pool
 	log.Println("Connected to PostgreSQL")
 
-	createTable()
+	err = createTable()
+	if err != nil {
+		log.Fatal("Failed to create table:", err)
+	}
+
+	createIndexesSQL := `
+		CREATE INDEX IF NOT EXISTS idx_properties_price ON properties (price);
+		CREATE INDEX IF NOT EXISTS idx_properties_location ON properties (location);
+	`
+	_, err = pool.Exec(ctx, createIndexesSQL)
+	if err != nil {
+		log.Fatal("Error creating indexes: ", err)
+	}
+
+	fmt.Println("Table and indexes created successfully using pgxpool.")
 }
 
 // createTable ensures table exists
-func createTable() {
+func createTable() error {
 	query := `
 	CREATE TABLE IF NOT EXISTS properties (
 		id SERIAL PRIMARY KEY,
@@ -50,8 +65,10 @@ func createTable() {
 
 	_, err := Pool.Exec(context.Background(), query)
 	if err != nil {
-		log.Fatal("Failed to create table:", err)
+		return err
 	}
+
+	return nil
 }
 
 // Insert Properties
