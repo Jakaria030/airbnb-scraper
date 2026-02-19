@@ -5,8 +5,9 @@ import (
 	"airbnb-scraper/models"
 	"airbnb-scraper/scraper"
 	"airbnb-scraper/utils"
-
 	"fmt"
+	"sync"
+
 	"log"
 
 	"context"
@@ -18,13 +19,14 @@ import (
 func ScrapeAirbnb() ([]models.Property, error) {
 
 	// context allocator
-	allocCtx, _ := chromedp.NewExecAllocator(
+	allocCtx, cancel := chromedp.NewExecAllocator(
 		context.Background(),
 		chromedp.Flag("headless", true),
 		chromedp.Flag("disable-blink-features", "AutomationControlled"),
 		chromedp.Flag("enable-automation", false),
 		chromedp.UserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36"),
 	)
+	defer cancel()
 
 	ctx, cancel := chromedp.NewContext(allocCtx)
 	defer cancel()
@@ -61,29 +63,72 @@ func ScrapeAirbnb() ([]models.Property, error) {
 		sectionLinks = sectionLinks[:config.MAX_HOME_PAGE_LINK]
 	}
 
-	// Loop sections
-	var allProperties []models.Property
-	for indx, sectionURL := range sectionLinks {
-		fmt.Println("\nSECTION:", indx+1)
+	jobs := make(chan models.ScrapeJob)
+	go func() {
+		defer close(jobs)
 
-		for page := 1; page <= config.MAX_PAGE_NO; page++ {
+		for indx, sectionURL := range sectionLinks {
+			for page := 1; page <= config.MAX_PAGE_NO; page++ {
 
-			offset := (page - 1) * 20
-			pageURL := utils.AddOffset(sectionURL, offset)
+				offset := (page - 1) * 20
+				jobs <- models.ScrapeJob{
+					SectionIndx: indx + 1,
+					Page:        page,
+					Url:         utils.AddOffset(sectionURL, offset),
+				}
+			}
+		}
+	}()
 
-			fmt.Println("Visiting page no:", page)
+	// Collect result
+	results := make(chan models.Result)
+	var wg sync.WaitGroup
 
-			var properties []models.Property
-			properties, err := scraper.ScrapePage(ctx, pageURL)
+	for worker := 0; worker < config.MAX_WORKERS; worker++ {
+		wg.Add(1)
 
-			if err != nil {
-				log.Println("Scrape error:", err)
-				continue
-			} else {
-				fmt.Println("Date fetched for page no:", page)
+		go func() {
+			defer wg.Done()
+
+			for job := range jobs {
+				workerCtx, cancel := chromedp.NewContext(allocCtx)
+				defer cancel()
+				workerCtx, cancel = context.WithTimeout(workerCtx, config.TIMEOUT*time.Second)
+				defer cancel()
+
+				props, err := scraper.ScrapePage(workerCtx, job.Url)
+				results <- models.Result{Properties: props, Err: err, Job: job}
 			}
 
-			allProperties = append(allProperties, properties...)
+		}()
+	}
+
+	go func() {
+		wg.Wait()
+		close(results)
+	}()
+
+	go func() {
+		ticker := time.NewTicker(10 * time.Second) // Change interval as needed
+		defer ticker.Stop()
+
+		for range ticker.C {
+			// Print a random message every interval
+			fmt.Println(utils.GetRandomMessage())
+		}
+	}()
+
+	seen := sync.Map{}
+	var allProperties []models.Property
+	for result := range results {
+		if result.Err != nil {
+			log.Printf("Scrape error (section %d, page %d): %v", result.Job.SectionIndx, result.Job.Page, result.Err)
+			continue
+		}
+		for _, p := range result.Properties {
+			if _, loaded := seen.LoadOrStore(p.URL, struct{}{}); !loaded {
+				allProperties = append(allProperties, p)
+			}
 		}
 	}
 

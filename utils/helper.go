@@ -35,3 +35,14 @@ func Unique(input []string) []string {
 func RandomDelay() time.Duration {
 	return time.Duration(rand.Intn(4)+2) * time.Second
 }
+
+// random message
+var messages = []string{
+	"Just a moment, gathering the data!",
+	"Almost there, please hang on!",
+	"Scraping in progress, stay with us!",
+	"Loading your results, one more second...",
+}
+func GetRandomMessage() string {
+	return messages[rand.Intn(len(messages))]
+}
