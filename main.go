@@ -11,8 +11,10 @@ import (
 
 func main() {
 	// Connect to the PostgreSQL database
-	storage.InitDB(config.CONNECTION_STRING)
-
+	dbErr := storage.InitDB(config.CONNECTION_STRING)
+	if dbErr != nil {
+		fmt.Println("Database Error:", dbErr)
+	}
 	fmt.Println("Starting Airbnb Scraper...")
 
 	// Call base scraper
@@ -32,11 +34,13 @@ func main() {
 	fmt.Println("Airbnb data saved into csv file successfully.")
 
 	// Save property to the database
-	err = storage.InsertProperties(properties)
-	if err != nil {
-		fmt.Println("Airbnb properties is not saved into postgresql")
-	}else{
-		fmt.Println("Airbnb data saved into postgresql database successfully.")
+	if dbErr == nil {
+		err = storage.InsertProperties(properties)
+		if err != nil {
+			fmt.Println("Airbnb properties is not saved into postgresql")
+		} else {
+			fmt.Println("Airbnb data saved into postgresql database successfully.")
+		}
 	}
 
 	// Show report

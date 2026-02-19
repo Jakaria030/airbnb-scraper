@@ -15,17 +15,17 @@ import (
 
 var Pool *pgxpool.Pool
 
-func InitDB(connString string) {
+func InitDB(connString string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), config.TIMEOUT*time.Second)
 	defer cancel()
 
 	pool, err := pgxpool.New(ctx, connString)
 	if err != nil {
-		log.Fatal("Unable to connect to database:", err)
+		return err
 	}
 
 	if err := pool.Ping(ctx); err != nil {
-		log.Fatal("Database not reachable:", err)
+		return err
 	}
 
 	Pool = pool
@@ -33,7 +33,7 @@ func InitDB(connString string) {
 
 	err = createTable()
 	if err != nil {
-		log.Fatal("Failed to create table:", err)
+		return err
 	}
 
 	createIndexesSQL := `
@@ -42,10 +42,11 @@ func InitDB(connString string) {
 	`
 	_, err = pool.Exec(ctx, createIndexesSQL)
 	if err != nil {
-		log.Fatal("Error creating indexes: ", err)
+		return err
 	}
 
 	fmt.Println("Table and indexes created successfully using pgxpool.")
+	return nil
 }
 
 // createTable ensures table exists
