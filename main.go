@@ -10,6 +10,9 @@ import (
 )
 
 func main() {
+	// Connect to the PostgreSQL database
+	storage.InitDB(config.CONNECTION_STRING)
+
 	fmt.Println("Starting Airbnb Scraper...")
 
 	// Call base scraper
@@ -27,6 +30,14 @@ func main() {
 		return
 	}
 	fmt.Println("Airbnb data saved into csv file successfully.")
+
+	// Save property to the database
+	err = storage.InsertProperties(properties)
+	if err != nil {
+		fmt.Println("Airbnb properties is not saved into postgresql")
+	}else{
+		fmt.Println("Airbnb data saved into postgresql database successfully.")
+	}
 
 	// Show report
 	report := utils.PropertyReport(properties)
