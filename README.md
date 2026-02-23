@@ -28,6 +28,20 @@ airbnb-scraper
 └──── README.md  
 ```
 
+## 🚀 Getting Started With A Single Command
+1. Clone the repository:
+    ```bash
+    git clone https://github.com/Jakaria030/airbnb-scraper.git
+    ```
+2. Navigate to the project directory:
+    ```bash
+    cd airbnb-scraper
+    ```
+3. Run the Scraper
+    ```bash
+    ./run.sh
+    ```
+
 
 ## 🚀 Getting Started
 Follow these steps to set up and run the project locally:
